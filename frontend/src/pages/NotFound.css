@@ -1,0 +1,74 @@
+.notfound-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding: 24px;
+}
+
+.notfound-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 50%, rgba(255,107,53,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 50%, rgba(230,57,70,0.07) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.notfound-content {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+}
+
+.notfound-emoji {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  display: block;
+  animation: float 4s ease-in-out infinite;
+}
+
+.notfound-404 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 8rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: -4px;
+}
+
+.notfound-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.notfound-desc {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+
+.notfound-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+
+.notfound-food-items {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+.notfound-food-items span {
+  font-size: 2rem;
+  animation: float 4s ease-in-out infinite;
+  display: inline-block;
+}

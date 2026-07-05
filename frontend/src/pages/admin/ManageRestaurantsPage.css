@@ -1,0 +1,137 @@
+/* ── Manage Restaurants Page ─────────────────── */
+.manage-restaurants-page { padding: 0 0 100px; }
+
+/* ── Hero Banner ── */
+.rest-admin-hero-banner {
+  position: relative;
+  padding: 58px 0 48px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 40px;
+}
+.rest-admin-hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1600&h=400&fit=crop') center/cover no-repeat,
+    linear-gradient(135deg, rgba(255,107,53,0.3) 0%, rgba(7,7,15,0.95) 50%, rgba(7,7,15,1) 100%);
+  background-blend-mode: multiply;
+  pointer-events: none;
+}
+.rest-admin-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7,7,15,0.1) 0%, rgba(7,7,15,0.72) 65%, rgba(7,7,15,1) 100%);
+}
+.rest-admin-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(75px);
+  pointer-events: none;
+}
+.rest-orb-1 {
+  width: 320px; height: 320px;
+  background: rgba(255,107,53,0.12);
+  top: -80px; right: 8%;
+  animation: orb-drift 12s ease-in-out infinite;
+  z-index: 1;
+}
+.rest-orb-2 {
+  width: 220px; height: 220px;
+  background: rgba(247,147,30,0.08);
+  bottom: -40px; left: 15%;
+  animation: orb-drift 9s ease-in-out infinite reverse;
+  z-index: 1;
+}
+.rest-admin-hero-inner {
+  position: relative;
+  z-index: 2;
+}
+.rest-admin-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.rest-admin-hero-icon {
+  width: 60px; height: 60px;
+  border-radius: 16px;
+  background: rgba(255,107,53,0.18);
+  border: 1px solid rgba(255,107,53,0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+.rest-admin-hero-left h1 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.rest-admin-hero-left p { color: var(--text-secondary); font-size: 0.95rem; }
+
+/* ── Restaurant Grid ── */
+.restaurants-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+/* ── Restaurant Card ── */
+.rest-admin-card {
+  overflow: hidden;
+  transition: var(--transition);
+}
+.rest-admin-card.inactive { opacity: 0.65; }
+.rest-admin-banner {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.rest-admin-inactive-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.58);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.7);
+}
+.rest-admin-body { padding: 20px 22px 22px; }
+.rest-admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.rest-admin-name {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+.rest-admin-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.rest-admin-meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+@media (max-width: 1024px) { .restaurants-admin-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .restaurants-admin-grid { grid-template-columns: 1fr; } }

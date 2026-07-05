@@ -1,0 +1,89 @@
+/* ── Delivery Dashboard ──────────────────────── */
+.delivery-dashboard { padding: 0 0 100px; }
+
+/* ── Hero Banner ── */
+.delivery-hero-banner {
+  position: relative;
+  padding: 56px 0 44px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 40px;
+}
+.delivery-hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1526367790999-0150786686a2?w=1600&h=500&fit=crop') center/cover no-repeat,
+    linear-gradient(135deg, rgba(255,107,53,0.35) 0%, rgba(7,7,15,0.95) 55%, rgba(7,7,15,1) 100%);
+  background-blend-mode: multiply;
+  pointer-events: none;
+}
+.delivery-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7,7,15,0.08) 0%, rgba(7,7,15,0.68) 60%, rgba(7,7,15,1) 100%);
+}
+.delivery-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+}
+.delivery-orb-1 {
+  width: 340px; height: 340px;
+  background: rgba(255,107,53,0.12);
+  top: -90px; right: 5%;
+  animation: orb-drift 13s ease-in-out infinite;
+  z-index: 1;
+}
+.delivery-orb-2 {
+  width: 220px; height: 220px;
+  background: rgba(247,147,30,0.08);
+  bottom: -40px; left: 15%;
+  animation: orb-drift 9s ease-in-out infinite reverse;
+  z-index: 1;
+}
+.delivery-hero-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.delivery-hero-icon {
+  width: 62px; height: 62px;
+  border-radius: 18px;
+  background: rgba(255,107,53,0.18);
+  border: 1px solid rgba(255,107,53,0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+  animation: pulse-glow 3s ease infinite;
+}
+.delivery-hero-text h1 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.delivery-hero-text p { color: var(--text-secondary); font-size: 0.95rem; }
+
+/* ── Active order card ── */
+.delivery-order-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  transition: var(--transition);
+}
+.delivery-order-card:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,107,53,0.2);
+}

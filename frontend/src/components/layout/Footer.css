@@ -1,0 +1,167 @@
+.footer {
+  position: relative;
+  background: rgba(4, 4, 10, 0.98);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 100px;
+  overflow: hidden;
+}
+
+/* ── Background image layer ── */
+.footer-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&h=600&fit=crop') center/cover no-repeat;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+/* ── Gradient image strip at top ── */
+.footer-food-strip {
+  display: flex;
+  height: 72px;
+  overflow: hidden;
+  position: relative;
+}
+.footer-food-strip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(4,4,10,0.6) 0%, transparent 15%, transparent 85%, rgba(4,4,10,0.6) 100%);
+}
+.footer-food-strip img {
+  flex: 1;
+  object-fit: cover;
+  height: 100%;
+  opacity: 0.3;
+  filter: grayscale(25%) brightness(0.55);
+  transition: opacity 0.3s;
+}
+.footer-food-strip img:hover { opacity: 0.5; }
+
+/* ── Main content ── */
+.footer .container {
+  position: relative;
+  z-index: 1;
+  padding-top: 60px;
+  padding-bottom: 8px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr 1fr;
+  gap: 52px;
+  margin-bottom: 56px;
+}
+
+/* ── Brand ── */
+.footer-logo {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+}
+.footer-logo .logo-ruchi { color: white; }
+.footer-logo .logo-kart {
+  background: linear-gradient(135deg, #FF6B35, #E63946);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.footer-tagline {
+  color: rgba(255,255,255,0.38);
+  font-size: 0.875rem;
+  line-height: 1.78;
+  margin-bottom: 26px;
+  max-width: 290px;
+}
+
+.footer-socials { display: flex; gap: 10px; }
+.footer-social-btn {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  color: rgba(255,255,255,0.42);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s ease;
+}
+.footer-social-btn:hover {
+  background: rgba(255,107,53,0.14);
+  border-color: rgba(255,107,53,0.3);
+  color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255,107,53,0.15);
+}
+
+/* ── Columns ── */
+.footer-col h4 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 22px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.footer-col ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.footer-col ul li,
+.footer-col ul li a {
+  color: rgba(255,255,255,0.38);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.footer-col ul li a:hover { color: var(--primary); }
+.footer-col ul li:hover { color: rgba(255,255,255,0.65); }
+
+/* ── Divider & Bottom ── */
+.footer-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), rgba(255,107,53,0.15), rgba(255,255,255,0.07), transparent);
+}
+.footer-bottom { padding: 24px 0 36px; }
+.footer-bottom-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-bottom-content p {
+  color: rgba(255,255,255,0.28);
+  font-size: 0.82rem;
+}
+.footer-bottom-links { display: flex; gap: 24px; }
+.footer-bottom-links span {
+  color: rgba(255,255,255,0.28);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.footer-bottom-links span:hover { color: var(--primary); }
+
+@media (max-width: 1024px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
+}
+@media (max-width: 640px) {
+  .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+  .footer .container { padding-top: 44px; }
+  .footer-bottom-content { flex-direction: column; text-align: center; }
+  .footer-bottom-links { justify-content: center; }
+}

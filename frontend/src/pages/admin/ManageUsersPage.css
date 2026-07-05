@@ -1,0 +1,98 @@
+/* ── Manage Users Page ───────────────────────── */
+.manage-users-page { padding: 0 0 100px; }
+
+/* ── Hero Banner ── */
+.users-hero-banner {
+  position: relative;
+  padding: 58px 0 48px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 40px;
+}
+.users-hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&h=400&fit=crop') center/cover no-repeat,
+    linear-gradient(135deg, rgba(72,149,239,0.32) 0%, rgba(7,7,15,0.95) 55%, rgba(7,7,15,1) 100%);
+  background-blend-mode: multiply;
+  pointer-events: none;
+}
+.users-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7,7,15,0.1) 0%, rgba(7,7,15,0.72) 65%, rgba(7,7,15,1) 100%);
+}
+.users-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+}
+.users-orb-1 {
+  width: 300px; height: 300px;
+  background: rgba(72,149,239,0.1);
+  top: -80px; right: 10%;
+  animation: orb-drift 13s ease-in-out infinite;
+  z-index: 1;
+}
+.users-orb-2 {
+  width: 200px; height: 200px;
+  background: rgba(63,55,201,0.08);
+  bottom: -40px; left: 15%;
+  animation: orb-drift 9s ease-in-out infinite reverse;
+  z-index: 1;
+}
+.users-hero-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.users-hero-icon {
+  width: 60px; height: 60px;
+  border-radius: 16px;
+  background: rgba(72,149,239,0.18);
+  border: 1px solid rgba(72,149,239,0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+.users-hero-inner h1 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.users-hero-inner p { color: var(--text-secondary); font-size: 0.95rem; }
+
+/* ── Search wrap ── */
+.users-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ── User cell ── */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar-sm {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF6B35, #E63946);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+  flex-shrink: 0;
+}

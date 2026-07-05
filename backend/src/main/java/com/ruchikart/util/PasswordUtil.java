@@ -1,0 +1,20 @@
+package com.ruchikart.util;
+
+import org.mindrot.jbcrypt.BCrypt;
+
+public class PasswordUtil {
+
+    private static final int WORKLOAD = 12;
+
+    public static String hashPassword(String plainTextPassword) {
+        String salt = BCrypt.gensalt(WORKLOAD);
+        return BCrypt.hashpw(plainTextPassword, salt);
+    }
+
+    public static boolean checkPassword(String plainTextPassword, String hashedPassword) {
+        if (hashedPassword == null || !hashedPassword.startsWith("$2")) {
+            return false;
+        }
+        return BCrypt.checkpw(plainTextPassword, hashedPassword);
+    }
+}

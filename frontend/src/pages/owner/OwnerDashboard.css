@@ -1,0 +1,131 @@
+/* ── Owner Dashboard ─────────────────────────── */
+.owner-dashboard { padding: 0 0 100px; }
+
+/* ── Hero Banner ── */
+.owner-hero-banner {
+  position: relative;
+  padding: 56px 0 44px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 40px;
+}
+.owner-hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&h=500&fit=crop') center/cover no-repeat,
+    linear-gradient(135deg, rgba(255,107,53,0.35) 0%, rgba(7,7,15,0.95) 55%, rgba(7,7,15,1) 100%);
+  background-blend-mode: multiply;
+  pointer-events: none;
+}
+.owner-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7,7,15,0.08) 0%, rgba(7,7,15,0.68) 60%, rgba(7,7,15,1) 100%);
+}
+.owner-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(75px);
+  pointer-events: none;
+}
+.owner-orb-1 {
+  width: 360px; height: 360px;
+  background: rgba(255,107,53,0.12);
+  top: -100px; right: 5%;
+  animation: orb-drift 14s ease-in-out infinite;
+  z-index: 1;
+}
+.owner-orb-2 {
+  width: 240px; height: 240px;
+  background: rgba(247,147,30,0.08);
+  bottom: -50px; left: 12%;
+  animation: orb-drift 10s ease-in-out infinite reverse;
+  z-index: 1;
+}
+.owner-hero-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.owner-hero-icon {
+  width: 64px; height: 64px;
+  border-radius: 18px;
+  background: rgba(255,107,53,0.18);
+  border: 1px solid rgba(255,107,53,0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+.owner-hero-text h1 {
+  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.owner-hero-text p { color: var(--text-secondary); font-size: 0.95rem; }
+.owner-hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* ── Table Card ── */
+.owner-table-card { overflow: hidden; }
+.owner-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.owner-table-header h3 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+/* ── Quick Links ── */
+.owner-quick-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 24px;
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+}
+.owner-quick-icon-wrap {
+  width: 50px; height: 50px;
+  border-radius: 14px;
+  background: rgba(255,107,53,0.12);
+  border: 1px solid rgba(255,107,53,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+.owner-quick-card:hover .owner-quick-icon-wrap { transform: scale(1.1) rotate(-4deg); }
+.owner-quick-card h4 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 0.98rem;
+  margin-bottom: 4px;
+}
+.owner-quick-card p { font-size: 0.83rem; color: var(--text-muted); }
+.owner-quick-arrow {
+  margin-left: auto;
+  color: var(--primary);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+.owner-quick-card:hover .owner-quick-arrow { opacity: 1; transform: translateX(0); }

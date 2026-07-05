@@ -1,0 +1,204 @@
+/* ── Manage Menu Page ───────────────────────── */
+.menu-manage-page { padding: 0 0 100px; }
+
+/* ── Hero Banner ── */
+.menu-hero-banner {
+  position: relative;
+  padding: 56px 0 44px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 40px;
+}
+.menu-hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1600891964092-4316c288032e?w=1600&h=400&fit=crop') center/cover no-repeat,
+    linear-gradient(135deg, rgba(255,107,53,0.32) 0%, rgba(7,7,15,0.95) 55%, rgba(7,7,15,1) 100%);
+  background-blend-mode: multiply;
+  pointer-events: none;
+}
+.menu-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7,7,15,0.1) 0%, rgba(7,7,15,0.7) 65%, rgba(7,7,15,1) 100%);
+}
+.menu-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+}
+.menu-orb-1 {
+  width: 300px; height: 300px;
+  background: rgba(255,107,53,0.1);
+  top: -70px; right: 10%;
+  animation: orb-drift 12s ease-in-out infinite;
+  z-index: 1;
+}
+.menu-hero-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.menu-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.menu-hero-icon {
+  width: 60px; height: 60px;
+  border-radius: 16px;
+  background: rgba(255,107,53,0.18);
+  border: 1px solid rgba(255,107,53,0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+.menu-hero-left h1 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.menu-hero-left p { color: var(--text-secondary); font-size: 0.95rem; }
+
+/* ── Modal ── */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.modal-header h3 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0;
+}
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+.modal-close:hover { background: rgba(239,71,111,0.15); border-color: var(--error); color: var(--error); }
+
+/* ── Modal form field overrides ── */
+.modal-content .form-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+}
+.modal-content .input-field {
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-size: 0.92rem;
+}
+.modal-content .input-field:focus {
+  border-color: var(--primary);
+  background: rgba(255,107,53,0.05);
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.12), inset 0 0 0 1px rgba(255,107,53,0.1);
+}
+.modal-content textarea.input-field {
+  min-height: 80px;
+  resize: none;
+}
+.modal-content select.input-field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+.modal-content select.input-field option {
+  background-color: #0c0c18;
+  color: rgba(255, 255, 255, 0.95);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  padding: 10px;
+}
+
+/* ── Segmented Control ── */
+.custom-segmented-control {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 4px;
+  width: 100%;
+}
+
+.segment-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.segment-btn:hover {
+  color: white;
+}
+
+.segment-btn.active.veg {
+  background: rgba(6, 214, 160, 0.18);
+  color: var(--success);
+  border: 1px solid rgba(6, 214, 160, 0.35) !important;
+}
+
+.segment-btn.active.nonveg {
+  background: rgba(239, 71, 111, 0.18);
+  color: var(--error);
+  border: 1px solid rgba(239, 71, 111, 0.35) !important;
+}
+
+.form-row-modal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.toggle-group {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-bottom: 24px !important;
+}
+.toggle-group label:first-child { margin: 0; white-space: nowrap; }
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
