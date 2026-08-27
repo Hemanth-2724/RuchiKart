@@ -1,127 +1,121 @@
 package com.ruchikart.dao;
 
+import com.ruchikart.entity.MenuEntity;
 import com.ruchikart.model.Menu;
-import com.ruchikart.util.DBUtil;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class MenuDAO {
 
-    private Menu mapRow(ResultSet rs) throws SQLException {
-        Menu menu = new Menu();
-        menu.setMenuID(rs.getInt("MenuID"));
-        menu.setRestaurantID(rs.getInt("RestaurantID"));
-        menu.setItemName(rs.getString("ItemName"));
-        menu.setDescription(rs.getString("Description"));
-        menu.setPrice(rs.getBigDecimal("Price"));
-        menu.setAvailable(rs.getBoolean("IsAvailable"));
-        menu.setImagePath(rs.getString("ImagePath"));
-        menu.setVeg(rs.getBoolean("IsVeg"));
-        return menu;
+    @Autowired
+    private SessionFactory sessionFactory;
+
+    private Session getSession() {
+        return sessionFactory.getCurrentSession();
     }
 
-    public List<Menu> findByRestaurantId(int restaurantId) throws SQLException {
+    private Menu mapEntity(MenuEntity e) {
+        if (e == null) return null;
+        Menu m = new Menu();
+        m.setMenuID(e.getMenuId());
+        m.setRestaurantID(e.getRestaurantId());
+        m.setItemName(e.getItemName());
+        m.setDescription(e.getDescription());
+        m.setPrice(e.getPrice());
+        m.setAvailable(e.isAvailable());
+        m.setImagePath(e.getImagePath());
+        m.setVeg(e.isVeg());
+        return m;
+    }
+
+    public List<Menu> findByRestaurantId(int restaurantId) {
+        Session session = getSession();
+        List<MenuEntity> entities = session.createQuery(
+                "FROM MenuEntity WHERE restaurantId = :rId ORDER BY menuId ASC", MenuEntity.class
+        ).setParameter("rId", restaurantId).getResultList();
         List<Menu> list = new ArrayList<>();
-        String sql = "SELECT * FROM Menu WHERE RestaurantID = ? ORDER BY MenuID";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, restaurantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(mapRow(rs));
-            }
-        }
+        entities.forEach(e -> list.add(mapEntity(e)));
         return list;
     }
 
-    public List<Menu> findAvailableByRestaurantId(int restaurantId) throws SQLException {
+    public List<Menu> findAvailableByRestaurantId(int restaurantId) {
+        Session session = getSession();
+        List<MenuEntity> entities = session.createQuery(
+                "FROM MenuEntity WHERE restaurantId = :rId AND available = true ORDER BY menuId ASC", MenuEntity.class
+        ).setParameter("rId", restaurantId).getResultList();
         List<Menu> list = new ArrayList<>();
-        String sql = "SELECT * FROM Menu WHERE RestaurantID = ? AND IsAvailable = TRUE ORDER BY MenuID";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, restaurantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(mapRow(rs));
-            }
-        }
+        entities.forEach(e -> list.add(mapEntity(e)));
         return list;
     }
 
-    public Menu findById(int menuId) throws SQLException {
-        String sql = "SELECT * FROM Menu WHERE MenuID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, menuId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
-        }
-        return null;
+    public Menu findById(int menuId) {
+        Session session = getSession();
+        MenuEntity entity = session.get(MenuEntity.class, menuId);
+        return mapEntity(entity);
     }
 
-    public Menu create(Menu menu) throws SQLException {
-        String sql = "INSERT INTO Menu (RestaurantID, ItemName, Description, Price, IsAvailable, ImagePath, IsVeg) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, menu.getRestaurantID());
-            ps.setString(2, menu.getItemName());
-            ps.setString(3, menu.getDescription());
-            ps.setBigDecimal(4, menu.getPrice());
-            ps.setBoolean(5, menu.isAvailable());
-            ps.setString(6, menu.getImagePath());
-            ps.setBoolean(7, menu.isVeg());
-            ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) menu.setMenuID(keys.getInt(1));
-            }
-        }
+    public Menu create(Menu menu) {
+        Session session = getSession();
+        MenuEntity entity = new MenuEntity();
+        entity.setRestaurantId(menu.getRestaurantID());
+        entity.setItemName(menu.getItemName());
+        entity.setDescription(menu.getDescription());
+        entity.setPrice(menu.getPrice());
+        entity.setAvailable(menu.isAvailable());
+        entity.setImagePath(menu.getImagePath());
+        entity.setVeg(menu.isVeg());
+
+        session.persist(entity);
+        menu.setMenuID(entity.getMenuId());
         return menu;
     }
 
-    public boolean update(Menu menu) throws SQLException {
-        String sql = "UPDATE Menu SET ItemName = ?, Description = ?, Price = ?, IsAvailable = ?, ImagePath = ?, IsVeg = ? WHERE MenuID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, menu.getItemName());
-            ps.setString(2, menu.getDescription());
-            ps.setBigDecimal(3, menu.getPrice());
-            ps.setBoolean(4, menu.isAvailable());
-            ps.setString(5, menu.getImagePath());
-            ps.setBoolean(6, menu.isVeg());
-            ps.setInt(7, menu.getMenuID());
-            return ps.executeUpdate() > 0;
-        }
+    public boolean update(Menu menu) {
+        Session session = getSession();
+        MenuEntity entity = session.get(MenuEntity.class, menu.getMenuID());
+        if (entity == null) return false;
+
+        entity.setItemName(menu.getItemName());
+        entity.setDescription(menu.getDescription());
+        entity.setPrice(menu.getPrice());
+        entity.setAvailable(menu.isAvailable());
+        entity.setImagePath(menu.getImagePath());
+        entity.setVeg(menu.isVeg());
+
+        session.merge(entity);
+        return true;
     }
 
-    public boolean delete(int menuId) throws SQLException {
-        String sql = "DELETE FROM Menu WHERE MenuID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, menuId);
-            return ps.executeUpdate() > 0;
-        }
+    public boolean delete(int menuId) {
+        Session session = getSession();
+        MenuEntity entity = session.get(MenuEntity.class, menuId);
+        if (entity == null) return false;
+
+        session.remove(entity);
+        return true;
     }
 
-    public boolean toggleAvailability(int menuId, boolean isAvailable) throws SQLException {
-        String sql = "UPDATE Menu SET IsAvailable = ? WHERE MenuID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setBoolean(1, isAvailable);
-            ps.setInt(2, menuId);
-            return ps.executeUpdate() > 0;
-        }
+    public boolean toggleAvailability(int menuId, boolean isAvailable) {
+        Session session = getSession();
+        MenuEntity entity = session.get(MenuEntity.class, menuId);
+        if (entity == null) return false;
+
+        entity.setAvailable(isAvailable);
+        session.merge(entity);
+        return true;
     }
 
-    public int countByRestaurantId(int restaurantId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Menu WHERE RestaurantID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, restaurantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
-            }
-        }
-        return 0;
+    public int countByRestaurantId(int restaurantId) {
+        Session session = getSession();
+        Long count = session.createQuery(
+                "SELECT COUNT(m) FROM MenuEntity m WHERE m.restaurantId = :rId", Long.class
+        ).setParameter("rId", restaurantId).getSingleResult();
+        return count != null ? count.intValue() : 0;
     }
 }

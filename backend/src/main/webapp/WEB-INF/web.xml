@@ -10,42 +10,6 @@
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
 
-    <!-- CORS Filter - must be first -->
-    <filter>
-        <filter-name>CORSFilter</filter-name>
-        <filter-class>com.ruchikart.filter.CORSFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>CORSFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
-
-    <!-- Auth Filter -->
-    <filter>
-        <filter-name>AuthFilter</filter-name>
-        <filter-class>com.ruchikart.filter.AuthFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>AuthFilter</filter-name>
-        <url-pattern>/api/restaurants/*</url-pattern>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>AuthFilter</filter-name>
-        <url-pattern>/api/orders/*</url-pattern>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>AuthFilter</filter-name>
-        <url-pattern>/api/owner/*</url-pattern>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>AuthFilter</filter-name>
-        <url-pattern>/api/delivery/*</url-pattern>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>AuthFilter</filter-name>
-        <url-pattern>/api/admin/*</url-pattern>
-    </filter-mapping>
-
     <!-- Session configuration -->
     <session-config>
         <session-timeout>60</session-timeout>
@@ -55,13 +19,5 @@
         </cookie-config>
         <tracking-mode>COOKIE</tracking-mode>
     </session-config>
-
-    <!-- Resource reference for JNDI DataSource -->
-    <resource-ref>
-        <description>RuchiKart DB Connection</description>
-        <res-ref-name>jdbc/ruchikart</res-ref-name>
-        <res-type>javax.sql.DataSource</res-type>
-        <res-auth>Container</res-auth>
-    </resource-ref>
 
 </web-app>

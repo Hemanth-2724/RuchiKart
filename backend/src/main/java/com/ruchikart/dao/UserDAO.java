@@ -1,204 +1,294 @@
 package com.ruchikart.dao;
 
+import com.ruchikart.entity.*;
 import com.ruchikart.model.User;
-import com.ruchikart.util.DBUtil;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
-import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class UserDAO {
 
-    private String getTableNameAndRole(int userId, String[] outRole) {
-        if (userId >= 4000000) {
-            if (outRole != null) outRole[0] = "admin";
-            return "Admin";
-        } else if (userId >= 3000000) {
-            if (outRole != null) outRole[0] = "delivery_partner";
-            return "DeliveryPartner";
-        } else if (userId >= 2000000) {
-            if (outRole != null) outRole[0] = "restaurant_owner";
-            return "RestaurantOwner";
-        } else {
-            if (outRole != null) outRole[0] = "customer";
-            return "Customer";
-        }
+    @Autowired
+    private SessionFactory sessionFactory;
+
+    private Session getSession() {
+        return sessionFactory.getCurrentSession();
     }
 
-    private String getIdColumn(String tableName) {
-        switch (tableName) {
-            case "Customer": return "CustomerID";
-            case "RestaurantOwner": return "OwnerID";
-            case "DeliveryPartner": return "PartnerID";
-            case "Admin": return "AdminID";
-            default: return "UserID";
-        }
-    }
-
-    private User mapRow(ResultSet rs) throws SQLException {
+    private User mapCustomer(CustomerEntity c) {
+        if (c == null) return null;
         User user = new User();
-        user.setUserID(rs.getInt("UserID"));
-        user.setUsername(rs.getString("Username"));
-        user.setPassword(rs.getString("Password"));
-        user.setEmail(rs.getString("Email"));
-        user.setAddress(rs.getString("Address"));
-        user.setRole(rs.getString("Role"));
-        Timestamp created = rs.getTimestamp("CreatedDate");
-        if (created != null) user.setCreatedDate(created.toLocalDateTime());
-        Timestamp lastLogin = rs.getTimestamp("LastLoginDate");
-        if (lastLogin != null) user.setLastLoginDate(lastLogin.toLocalDateTime());
+        user.setUserID(c.getCustomerId());
+        user.setUsername(c.getUsername());
+        user.setPassword(c.getPassword());
+        user.setEmail(c.getEmail());
+        user.setAddress(c.getAddress());
+        user.setRole("customer");
+        user.setCreatedDate(c.getCreatedDate());
+        user.setLastLoginDate(c.getLastLoginDate());
         return user;
     }
 
-    public User findByUsername(String username) throws SQLException {
-        String sql = "SELECT 'customer' AS Role, CustomerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM Customer WHERE Username = ?" +
-                     " UNION ALL " +
-                     "SELECT 'restaurant_owner' AS Role, OwnerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM RestaurantOwner WHERE Username = ?" +
-                     " UNION ALL " +
-                     "SELECT 'delivery_partner' AS Role, PartnerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM DeliveryPartner WHERE Username = ?" +
-                     " UNION ALL " +
-                     "SELECT 'admin' AS Role, AdminID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM Admin WHERE Username = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, username);
-            ps.setString(2, username);
-            ps.setString(3, username);
-            ps.setString(4, username);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
+    private User mapOwner(RestaurantOwnerEntity o) {
+        if (o == null) return null;
+        User user = new User();
+        user.setUserID(o.getOwnerId());
+        user.setUsername(o.getUsername());
+        user.setPassword(o.getPassword());
+        user.setEmail(o.getEmail());
+        user.setAddress(o.getAddress());
+        user.setRole("restaurant_owner");
+        user.setCreatedDate(o.getCreatedDate());
+        user.setLastLoginDate(o.getLastLoginDate());
+        return user;
+    }
+
+    private User mapDelivery(DeliveryPartnerEntity d) {
+        if (d == null) return null;
+        User user = new User();
+        user.setUserID(d.getPartnerId());
+        user.setUsername(d.getUsername());
+        user.setPassword(d.getPassword());
+        user.setEmail(d.getEmail());
+        user.setAddress(d.getAddress());
+        user.setRole("delivery_partner");
+        user.setCreatedDate(d.getCreatedDate());
+        user.setLastLoginDate(d.getLastLoginDate());
+        return user;
+    }
+
+    private User mapAdmin(AdminEntity a) {
+        if (a == null) return null;
+        User user = new User();
+        user.setUserID(a.getAdminId());
+        user.setUsername(a.getUsername());
+        user.setPassword(a.getPassword());
+        user.setEmail(a.getEmail());
+        user.setAddress(a.getAddress());
+        user.setRole("admin");
+        user.setCreatedDate(a.getCreatedDate());
+        user.setLastLoginDate(a.getLastLoginDate());
+        return user;
+    }
+
+    public User findByUsername(String username) {
+        Session session = getSession();
+
+        List<CustomerEntity> customers = session.createQuery("FROM CustomerEntity WHERE username = :u", CustomerEntity.class)
+                .setParameter("u", username).getResultList();
+        if (!customers.isEmpty()) return mapCustomer(customers.get(0));
+
+        List<RestaurantOwnerEntity> owners = session.createQuery("FROM RestaurantOwnerEntity WHERE username = :u", RestaurantOwnerEntity.class)
+                .setParameter("u", username).getResultList();
+        if (!owners.isEmpty()) return mapOwner(owners.get(0));
+
+        List<DeliveryPartnerEntity> partners = session.createQuery("FROM DeliveryPartnerEntity WHERE username = :u", DeliveryPartnerEntity.class)
+                .setParameter("u", username).getResultList();
+        if (!partners.isEmpty()) return mapDelivery(partners.get(0));
+
+        List<AdminEntity> admins = session.createQuery("FROM AdminEntity WHERE username = :u", AdminEntity.class)
+                .setParameter("u", username).getResultList();
+        if (!admins.isEmpty()) return mapAdmin(admins.get(0));
+
+        return null;
+    }
+
+    public User findByEmail(String email) {
+        Session session = getSession();
+
+        List<CustomerEntity> customers = session.createQuery("FROM CustomerEntity WHERE email = :e", CustomerEntity.class)
+                .setParameter("e", email).getResultList();
+        if (!customers.isEmpty()) return mapCustomer(customers.get(0));
+
+        List<RestaurantOwnerEntity> owners = session.createQuery("FROM RestaurantOwnerEntity WHERE email = :e", RestaurantOwnerEntity.class)
+                .setParameter("e", email).getResultList();
+        if (!owners.isEmpty()) return mapOwner(owners.get(0));
+
+        List<DeliveryPartnerEntity> partners = session.createQuery("FROM DeliveryPartnerEntity WHERE email = :e", DeliveryPartnerEntity.class)
+                .setParameter("e", email).getResultList();
+        if (!partners.isEmpty()) return mapDelivery(partners.get(0));
+
+        List<AdminEntity> admins = session.createQuery("FROM AdminEntity WHERE email = :e", AdminEntity.class)
+                .setParameter("e", email).getResultList();
+        if (!admins.isEmpty()) return mapAdmin(admins.get(0));
+
+        return null;
+    }
+
+    public User findById(int userId) {
+        Session session = getSession();
+
+        if (userId >= 4000000) {
+            AdminEntity admin = session.get(AdminEntity.class, userId);
+            if (admin != null) return mapAdmin(admin);
+        } else if (userId >= 3000000) {
+            DeliveryPartnerEntity partner = session.get(DeliveryPartnerEntity.class, userId);
+            if (partner != null) return mapDelivery(partner);
+        } else if (userId >= 2000000) {
+            RestaurantOwnerEntity owner = session.get(RestaurantOwnerEntity.class, userId);
+            if (owner != null) return mapOwner(owner);
+        } else {
+            CustomerEntity customer = session.get(CustomerEntity.class, userId);
+            if (customer != null) return mapCustomer(customer);
         }
         return null;
     }
 
-    public User findByEmail(String email) throws SQLException {
-        String sql = "SELECT 'customer' AS Role, CustomerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM Customer WHERE Email = ?" +
-                     " UNION ALL " +
-                     "SELECT 'restaurant_owner' AS Role, OwnerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM RestaurantOwner WHERE Email = ?" +
-                     " UNION ALL " +
-                     "SELECT 'delivery_partner' AS Role, PartnerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM DeliveryPartner WHERE Email = ?" +
-                     " UNION ALL " +
-                     "SELECT 'admin' AS Role, AdminID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM Admin WHERE Email = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, email);
-            ps.setString(2, email);
-            ps.setString(3, email);
-            ps.setString(4, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
-        }
-        return null;
-    }
-
-    public User findById(int userId) throws SQLException {
-        String[] roleHolder = new String[1];
-        String tableName = getTableNameAndRole(userId, roleHolder);
-        String idCol = getIdColumn(tableName);
-        String sql = "SELECT '" + roleHolder[0] + "' AS Role, " + idCol + " AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate " +
-                     "FROM " + tableName + " WHERE " + idCol + " = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
-        }
-        return null;
-    }
-
-    public User create(User user) throws SQLException {
+    public User create(User user) {
+        Session session = getSession();
         String role = user.getRole() != null ? user.getRole() : "customer";
-        String tableName;
-        if ("admin".equals(role)) tableName = "Admin";
-        else if ("restaurant_owner".equals(role)) tableName = "RestaurantOwner";
-        else if ("delivery_partner".equals(role)) tableName = "DeliveryPartner";
-        else tableName = "Customer";
 
-        String sql = "INSERT INTO " + tableName + " (Username, Password, Email, Address, CreatedDate) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, user.getUsername());
-            ps.setString(2, user.getPassword());
-            ps.setString(3, user.getEmail());
-            ps.setString(4, user.getAddress());
-            ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
-            ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) user.setUserID(keys.getInt(1));
-            }
+        if ("admin".equals(role)) {
+            AdminEntity entity = new AdminEntity();
+            entity.setUsername(user.getUsername());
+            entity.setPassword(user.getPassword());
+            entity.setEmail(user.getEmail());
+            entity.setAddress(user.getAddress());
+            entity.setCreatedDate(LocalDateTime.now());
+            session.persist(entity);
+            user.setUserID(entity.getAdminId());
+        } else if ("restaurant_owner".equals(role)) {
+            RestaurantOwnerEntity entity = new RestaurantOwnerEntity();
+            entity.setUsername(user.getUsername());
+            entity.setPassword(user.getPassword());
+            entity.setEmail(user.getEmail());
+            entity.setAddress(user.getAddress());
+            entity.setCreatedDate(LocalDateTime.now());
+            session.persist(entity);
+            user.setUserID(entity.getOwnerId());
+        } else if ("delivery_partner".equals(role)) {
+            DeliveryPartnerEntity entity = new DeliveryPartnerEntity();
+            entity.setUsername(user.getUsername());
+            entity.setPassword(user.getPassword());
+            entity.setEmail(user.getEmail());
+            entity.setAddress(user.getAddress());
+            entity.setCreatedDate(LocalDateTime.now());
+            session.persist(entity);
+            user.setUserID(entity.getPartnerId());
+        } else {
+            CustomerEntity entity = new CustomerEntity();
+            entity.setUsername(user.getUsername());
+            entity.setPassword(user.getPassword());
+            entity.setEmail(user.getEmail());
+            entity.setAddress(user.getAddress());
+            entity.setCreatedDate(LocalDateTime.now());
+            session.persist(entity);
+            user.setUserID(entity.getCustomerId());
         }
         return user;
     }
 
-    public boolean update(User user) throws SQLException {
-        String tableName = getTableNameAndRole(user.getUserID(), null);
-        String idCol = getIdColumn(tableName);
-        String sql = "UPDATE " + tableName + " SET Username = ?, Email = ?, Address = ? WHERE " + idCol + " = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, user.getUsername());
-            ps.setString(2, user.getEmail());
-            ps.setString(3, user.getAddress());
-            ps.setInt(4, user.getUserID());
-            return ps.executeUpdate() > 0;
+    public boolean update(User user) {
+        Session session = getSession();
+        int userId = user.getUserID();
+
+        if (userId >= 4000000) {
+            AdminEntity entity = session.get(AdminEntity.class, userId);
+            if (entity == null) return false;
+            entity.setUsername(user.getUsername());
+            entity.setEmail(user.getEmail());
+            entity.setAddress(user.getAddress());
+            session.merge(entity);
+            return true;
+        } else if (userId >= 3000000) {
+            DeliveryPartnerEntity entity = session.get(DeliveryPartnerEntity.class, userId);
+            if (entity == null) return false;
+            entity.setUsername(user.getUsername());
+            entity.setEmail(user.getEmail());
+            entity.setAddress(user.getAddress());
+            session.merge(entity);
+            return true;
+        } else if (userId >= 2000000) {
+            RestaurantOwnerEntity entity = session.get(RestaurantOwnerEntity.class, userId);
+            if (entity == null) return false;
+            entity.setUsername(user.getUsername());
+            entity.setEmail(user.getEmail());
+            entity.setAddress(user.getAddress());
+            session.merge(entity);
+            return true;
+        } else {
+            CustomerEntity entity = session.get(CustomerEntity.class, userId);
+            if (entity == null) return false;
+            entity.setUsername(user.getUsername());
+            entity.setEmail(user.getEmail());
+            entity.setAddress(user.getAddress());
+            session.merge(entity);
+            return true;
         }
     }
 
-    public List<User> findAll() throws SQLException {
-        List<User> users = new ArrayList<>();
-        String sql = "SELECT 'customer' AS Role, CustomerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM Customer " +
-                     "UNION ALL " +
-                     "SELECT 'restaurant_owner' AS Role, OwnerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM RestaurantOwner " +
-                     "UNION ALL " +
-                     "SELECT 'delivery_partner' AS Role, PartnerID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM DeliveryPartner " +
-                     "UNION ALL " +
-                     "SELECT 'admin' AS Role, AdminID AS UserID, Username, Password, Email, Address, CreatedDate, LastLoginDate FROM Admin " +
-                     "ORDER BY UserID";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) users.add(mapRow(rs));
-        }
-        return users;
+    public List<User> findAll() {
+        Session session = getSession();
+        List<User> allUsers = new ArrayList<>();
+
+        List<CustomerEntity> customers = session.createQuery("FROM CustomerEntity", CustomerEntity.class).getResultList();
+        customers.forEach(c -> allUsers.add(mapCustomer(c)));
+
+        List<RestaurantOwnerEntity> owners = session.createQuery("FROM RestaurantOwnerEntity", RestaurantOwnerEntity.class).getResultList();
+        owners.forEach(o -> allUsers.add(mapOwner(o)));
+
+        List<DeliveryPartnerEntity> partners = session.createQuery("FROM DeliveryPartnerEntity", DeliveryPartnerEntity.class).getResultList();
+        partners.forEach(d -> allUsers.add(mapDelivery(d)));
+
+        List<AdminEntity> admins = session.createQuery("FROM AdminEntity", AdminEntity.class).getResultList();
+        admins.forEach(a -> allUsers.add(mapAdmin(a)));
+
+        allUsers.sort((u1, u2) -> Integer.compare(u1.getUserID(), u2.getUserID()));
+        return allUsers;
     }
 
-    public boolean updateRole(int userId, String role) throws SQLException {
+    public boolean updateRole(int userId, String newRole) {
         User user = findById(userId);
         if (user == null) return false;
-        if (user.getRole().equals(role)) return true;
+        if (user.getRole().equals(newRole)) return true;
 
-        // Delete from current table
         delete(userId);
-
-        // Insert into new table
-        user.setRole(role);
+        user.setRole(newRole);
         create(user);
         return true;
     }
 
-    public boolean updateLastLogin(int userId) throws SQLException {
-        String tableName = getTableNameAndRole(userId, null);
-        String idCol = getIdColumn(tableName);
-        String sql = "UPDATE " + tableName + " SET LastLoginDate = ? WHERE " + idCol + " = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
-            ps.setInt(2, userId);
-            return ps.executeUpdate() > 0;
+    public boolean updateLastLogin(int userId) {
+        Session session = getSession();
+        LocalDateTime now = LocalDateTime.now();
+
+        if (userId >= 4000000) {
+            AdminEntity entity = session.get(AdminEntity.class, userId);
+            if (entity != null) { entity.setLastLoginDate(now); session.merge(entity); return true; }
+        } else if (userId >= 3000000) {
+            DeliveryPartnerEntity entity = session.get(DeliveryPartnerEntity.class, userId);
+            if (entity != null) { entity.setLastLoginDate(now); session.merge(entity); return true; }
+        } else if (userId >= 2000000) {
+            RestaurantOwnerEntity entity = session.get(RestaurantOwnerEntity.class, userId);
+            if (entity != null) { entity.setLastLoginDate(now); session.merge(entity); return true; }
+        } else {
+            CustomerEntity entity = session.get(CustomerEntity.class, userId);
+            if (entity != null) { entity.setLastLoginDate(now); session.merge(entity); return true; }
         }
+        return false;
     }
 
-    public boolean delete(int userId) throws SQLException {
-        String tableName = getTableNameAndRole(userId, null);
-        String idCol = getIdColumn(tableName);
-        String sql = "DELETE FROM " + tableName + " WHERE " + idCol + " = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, userId);
-            return ps.executeUpdate() > 0;
+    public boolean delete(int userId) {
+        Session session = getSession();
+        if (userId >= 4000000) {
+            AdminEntity entity = session.get(AdminEntity.class, userId);
+            if (entity != null) { session.remove(entity); return true; }
+        } else if (userId >= 3000000) {
+            DeliveryPartnerEntity entity = session.get(DeliveryPartnerEntity.class, userId);
+            if (entity != null) { session.remove(entity); return true; }
+        } else if (userId >= 2000000) {
+            RestaurantOwnerEntity entity = session.get(RestaurantOwnerEntity.class, userId);
+            if (entity != null) { session.remove(entity); return true; }
+        } else {
+            CustomerEntity entity = session.get(CustomerEntity.class, userId);
+            if (entity != null) { session.remove(entity); return true; }
         }
+        return false;
     }
 }

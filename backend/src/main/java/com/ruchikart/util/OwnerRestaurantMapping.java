@@ -1,32 +1,30 @@
 package com.ruchikart.util;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import com.ruchikart.service.RestaurantService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class OwnerRestaurantMapping {
 
+    private static RestaurantService restaurantService;
+
+    @Autowired
+    public void setRestaurantService(RestaurantService service) {
+        OwnerRestaurantMapping.restaurantService = service;
+    }
+
     public static int getRestaurantId(int userId) {
-        String sql = "SELECT RestaurantID FROM Restaurant WHERE OwnerID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("RestaurantID");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (restaurantService != null) {
+            return restaurantService.findIdByOwnerId(userId);
         }
-        return 1; // Default fallback for safety
+        return 1;
     }
 
     public static boolean hasMapping(int userId) {
-        return true; // Dynamic lookup check
+        return true;
     }
 
     public static void addMapping(int userId, int restaurantId) {
-        // No-op as relationships are directly modeled via foreign keys in DB seeding
     }
 }

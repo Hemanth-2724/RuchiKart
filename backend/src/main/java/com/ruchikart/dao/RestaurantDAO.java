@@ -1,105 +1,116 @@
 package com.ruchikart.dao;
 
+import com.ruchikart.entity.RestaurantEntity;
 import com.ruchikart.model.Restaurant;
-import com.ruchikart.util.DBUtil;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class RestaurantDAO {
 
-    private Restaurant mapRow(ResultSet rs) throws SQLException {
+    @Autowired
+    private SessionFactory sessionFactory;
+
+    private Session getSession() {
+        return sessionFactory.getCurrentSession();
+    }
+
+    private Restaurant mapEntity(RestaurantEntity e) {
+        if (e == null) return null;
         Restaurant r = new Restaurant();
-        r.setRestaurantID(rs.getInt("RestaurantID"));
-        r.setName(rs.getString("Name"));
-        r.setCuisineType(rs.getString("CuisineType"));
-        r.setDeliveryTime(rs.getInt("DeliveryTime"));
-        r.setAddress(rs.getString("Address"));
-        r.setRating(rs.getBigDecimal("Rating"));
-        r.setActive(rs.getBoolean("IsActive"));
-        r.setImagePath(rs.getString("ImagePath"));
-        r.setVeg(rs.getBoolean("IsVeg"));
+        r.setRestaurantID(e.getRestaurantId());
+        r.setName(e.getName());
+        r.setCuisineType(e.getCuisineType());
+        r.setDeliveryTime(e.getDeliveryTime());
+        r.setAddress(e.getAddress());
+        r.setRating(e.getRating());
+        r.setActive(e.isActive());
+        r.setImagePath(e.getImagePath());
+        r.setVeg(e.isVeg());
         return r;
     }
 
-    public List<Restaurant> findAll() throws SQLException {
+    public List<Restaurant> findAll() {
+        Session session = getSession();
+        List<RestaurantEntity> entities = session.createQuery(
+                "FROM RestaurantEntity WHERE active = true ORDER BY rating DESC", RestaurantEntity.class
+        ).getResultList();
         List<Restaurant> list = new ArrayList<>();
-        String sql = "SELECT * FROM Restaurant WHERE IsActive = TRUE ORDER BY Rating DESC";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) list.add(mapRow(rs));
-        }
+        entities.forEach(e -> list.add(mapEntity(e)));
         return list;
     }
 
-    public List<Restaurant> findAllForAdmin() throws SQLException {
+    public List<Restaurant> findAllForAdmin() {
+        Session session = getSession();
+        List<RestaurantEntity> entities = session.createQuery(
+                "FROM RestaurantEntity ORDER BY restaurantId ASC", RestaurantEntity.class
+        ).getResultList();
         List<Restaurant> list = new ArrayList<>();
-        String sql = "SELECT * FROM Restaurant ORDER BY RestaurantID";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) list.add(mapRow(rs));
-        }
+        entities.forEach(e -> list.add(mapEntity(e)));
         return list;
     }
 
-    public Restaurant findById(int restaurantId) throws SQLException {
-        String sql = "SELECT * FROM Restaurant WHERE RestaurantID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, restaurantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
-        }
-        return null;
+    public Restaurant findById(int restaurantId) {
+        Session session = getSession();
+        RestaurantEntity entity = session.get(RestaurantEntity.class, restaurantId);
+        return mapEntity(entity);
     }
 
-    public Restaurant create(Restaurant restaurant) throws SQLException {
-        String sql = "INSERT INTO Restaurant (Name, CuisineType, DeliveryTime, Address, Rating, IsActive, ImagePath, IsVeg) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, restaurant.getName());
-            ps.setString(2, restaurant.getCuisineType());
-            ps.setInt(3, restaurant.getDeliveryTime());
-            ps.setString(4, restaurant.getAddress());
-            ps.setBigDecimal(5, restaurant.getRating());
-            ps.setBoolean(6, restaurant.isActive());
-            ps.setString(7, restaurant.getImagePath());
-            ps.setBoolean(8, restaurant.isVeg());
-            ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) restaurant.setRestaurantID(keys.getInt(1));
-            }
-        }
+    public int findIdByOwnerId(int ownerId) {
+        Session session = getSession();
+        List<Integer> list = session.createQuery(
+                "SELECT r.restaurantId FROM RestaurantEntity r WHERE r.ownerId = :oId", Integer.class
+        ).setParameter("oId", ownerId).getResultList();
+        return !list.isEmpty() ? list.get(0) : 1;
+    }
+
+    public Restaurant create(Restaurant restaurant) {
+        Session session = getSession();
+        RestaurantEntity entity = new RestaurantEntity();
+        entity.setName(restaurant.getName());
+        entity.setCuisineType(restaurant.getCuisineType());
+        entity.setDeliveryTime(restaurant.getDeliveryTime());
+        entity.setAddress(restaurant.getAddress());
+        entity.setRating(restaurant.getRating());
+        entity.setActive(restaurant.isActive());
+        entity.setImagePath(restaurant.getImagePath());
+        entity.setVeg(restaurant.isVeg());
+        
+        session.persist(entity);
+        restaurant.setRestaurantID(entity.getRestaurantId());
         return restaurant;
     }
 
-    public boolean update(Restaurant restaurant) throws SQLException {
-        String sql = "UPDATE Restaurant SET Name = ?, CuisineType = ?, DeliveryTime = ?, Address = ?, Rating = ?, ImagePath = ?, IsVeg = ? WHERE RestaurantID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, restaurant.getName());
-            ps.setString(2, restaurant.getCuisineType());
-            ps.setInt(3, restaurant.getDeliveryTime());
-            ps.setString(4, restaurant.getAddress());
-            ps.setBigDecimal(5, restaurant.getRating());
-            ps.setString(6, restaurant.getImagePath());
-            ps.setBoolean(7, restaurant.isVeg());
-            ps.setInt(8, restaurant.getRestaurantID());
-            return ps.executeUpdate() > 0;
-        }
+    public boolean update(Restaurant restaurant) {
+        Session session = getSession();
+        RestaurantEntity entity = session.get(RestaurantEntity.class, restaurant.getRestaurantID());
+        if (entity == null) return false;
+
+        entity.setName(restaurant.getName());
+        entity.setCuisineType(restaurant.getCuisineType());
+        entity.setDeliveryTime(restaurant.getDeliveryTime());
+        entity.setAddress(restaurant.getAddress());
+        entity.setRating(restaurant.getRating());
+        entity.setImagePath(restaurant.getImagePath());
+        entity.setVeg(restaurant.isVeg());
+        entity.setActive(restaurant.isActive());
+
+        session.merge(entity);
+        return true;
     }
 
-    public boolean toggleActive(int restaurantId, boolean isActive) throws SQLException {
-        String sql = "UPDATE Restaurant SET IsActive = ? WHERE RestaurantID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setBoolean(1, isActive);
-            ps.setInt(2, restaurantId);
-            return ps.executeUpdate() > 0;
-        }
+    public boolean toggleActive(int restaurantId, boolean isActive) {
+        Session session = getSession();
+        RestaurantEntity entity = session.get(RestaurantEntity.class, restaurantId);
+        if (entity == null) return false;
+
+        entity.setActive(isActive);
+        session.merge(entity);
+        return true;
     }
 }

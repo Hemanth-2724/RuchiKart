@@ -1,250 +1,255 @@
 package com.ruchikart.dao;
 
+import com.ruchikart.entity.*;
 import com.ruchikart.model.Order;
 import com.ruchikart.model.OrderItem;
-import com.ruchikart.util.DBUtil;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
-import java.sql.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class OrderDAO {
 
-    private Order mapOrderRow(ResultSet rs) throws SQLException {
-        Order order = new Order();
-        order.setOrderID(rs.getInt("OrderID"));
-        order.setUserID(rs.getInt("UserID"));
-        Timestamp orderDate = rs.getTimestamp("OrderDate");
-        if (orderDate != null) order.setOrderDate(orderDate.toLocalDateTime());
-        order.setTotalAmount(rs.getBigDecimal("TotalAmount"));
-        order.setStatus(rs.getString("Status"));
-        order.setPaymentMethod(rs.getString("PaymentMethod"));
-        order.setRestaurantID(rs.getInt("RestaurantID"));
-        int partnerId = rs.getInt("DeliveryPartnerID");
-        if (!rs.wasNull()) {
-            order.setDeliveryPartnerID(partnerId);
-        }
-        // Optional join columns
-        try { order.setRestaurantName(rs.getString("RestaurantName")); } catch (SQLException ignored) {}
-        try { order.setCustomerUsername(rs.getString("CustomerUsername")); } catch (SQLException ignored) {}
+    @Autowired
+    private SessionFactory sessionFactory;
+
+    private Session getSession() {
+        return sessionFactory.getCurrentSession();
+    }
+
+    private Order mapEntity(OrderEntity e) {
+        if (e == null) return null;
+        Order o = new Order();
+        o.setOrderID(e.getOrderId());
+        o.setUserID(e.getUserId());
+        o.setOrderDate(e.getOrderDate());
+        o.setTotalAmount(e.getTotalAmount());
+        o.setStatus(e.getStatus());
+        o.setPaymentMethod(e.getPaymentMethod());
+        o.setRestaurantID(e.getRestaurantId());
+        o.setDeliveryPartnerID(e.getDeliveryPartnerId());
+        return o;
+    }
+
+    public Order create(Order order) {
+        Session session = getSession();
+        OrderEntity entity = new OrderEntity();
+        entity.setUserId(order.getUserID());
+        entity.setOrderDate(LocalDateTime.now());
+        entity.setTotalAmount(order.getTotalAmount());
+        entity.setStatus(order.getStatus() != null ? order.getStatus() : "pending");
+        entity.setPaymentMethod(order.getPaymentMethod());
+        entity.setRestaurantId(order.getRestaurantID());
+
+        session.persist(entity);
+        order.setOrderID(entity.getOrderId());
+        order.setOrderDate(entity.getOrderDate());
         return order;
     }
 
-    private OrderItem mapOrderItemRow(ResultSet rs) throws SQLException {
-        OrderItem item = new OrderItem();
-        item.setOrderItemID(rs.getInt("OrderItemID"));
-        item.setOrderID(rs.getInt("OrderID"));
-        item.setMenuID(rs.getInt("MenuID"));
-        item.setQuantity(rs.getInt("Quantity"));
-        item.setItemTotal(rs.getBigDecimal("ItemTotal"));
-        try { item.setItemName(rs.getString("ItemName")); } catch (SQLException ignored) {}
-        return item;
-    }
-
-    public Order create(Order order) throws SQLException {
-        String sql = "INSERT INTO OrderTable (UserID, OrderDate, TotalAmount, Status, PaymentMethod, RestaurantID) VALUES (?, NOW(), ?, ?, ?, ?)";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, order.getUserID());
-            ps.setBigDecimal(2, order.getTotalAmount());
-            ps.setString(3, order.getStatus() != null ? order.getStatus() : "pending");
-            ps.setString(4, order.getPaymentMethod());
-            ps.setInt(5, order.getRestaurantID());
-            ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) order.setOrderID(keys.getInt(1));
-            }
-        }
-        return order;
-    }
-
-    public void addOrderItems(List<OrderItem> items) throws SQLException {
-        String sql = "INSERT INTO OrderItem (OrderID, MenuID, Quantity, ItemTotal) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (OrderItem item : items) {
-                ps.setInt(1, item.getOrderID());
-                ps.setInt(2, item.getMenuID());
-                ps.setInt(3, item.getQuantity());
-                ps.setBigDecimal(4, item.getItemTotal());
-                ps.addBatch();
-            }
-            ps.executeBatch();
+    public void addOrderItems(List<OrderItem> items) {
+        Session session = getSession();
+        for (OrderItem item : items) {
+            OrderItemEntity entity = new OrderItemEntity();
+            entity.setOrderId(item.getOrderID());
+            entity.setMenuId(item.getMenuID());
+            entity.setQuantity(item.getQuantity());
+            entity.setItemTotal(item.getItemTotal());
+            session.persist(entity);
         }
     }
 
-    public List<Order> findByUserId(int userId) throws SQLException {
-        List<Order> orders = new ArrayList<>();
-        String sql = "SELECT o.*, r.Name AS RestaurantName FROM OrderTable o " +
-                     "LEFT JOIN Restaurant r ON o.RestaurantID = r.RestaurantID " +
-                     "WHERE o.UserID = ? ORDER BY o.OrderDate DESC";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) orders.add(mapOrderRow(rs));
-            }
+    public List<Order> findByUserId(int userId) {
+        Session session = getSession();
+        List<Object[]> rows = session.createQuery(
+                "SELECT o, r.name FROM OrderEntity o LEFT JOIN RestaurantEntity r ON o.restaurantId = r.restaurantId " +
+                "WHERE o.userId = :uId ORDER BY o.orderDate DESC", Object[].class
+        ).setParameter("uId", userId).getResultList();
+
+        List<Order> list = new ArrayList<>();
+        for (Object[] row : rows) {
+            OrderEntity oe = (OrderEntity) row[0];
+            String rName = (String) row[1];
+            Order o = mapEntity(oe);
+            o.setRestaurantName(rName);
+            list.add(o);
         }
-        return orders;
+        return list;
     }
 
-    public List<Order> findByRestaurantId(int restaurantId) throws SQLException {
-        List<Order> orders = new ArrayList<>();
-        String sql = "SELECT o.*, u.Username AS CustomerUsername FROM OrderTable o " +
-                     "LEFT JOIN Customer u ON o.UserID = u.CustomerID " +
-                     "WHERE o.RestaurantID = ? ORDER BY o.OrderDate DESC";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, restaurantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) orders.add(mapOrderRow(rs));
-            }
+    public List<Order> findByRestaurantId(int restaurantId) {
+        Session session = getSession();
+        List<Object[]> rows = session.createQuery(
+                "SELECT o, c.username FROM OrderEntity o LEFT JOIN CustomerEntity c ON o.userId = c.customerId " +
+                "WHERE o.restaurantId = :rId ORDER BY o.orderDate DESC", Object[].class
+        ).setParameter("rId", restaurantId).getResultList();
+
+        List<Order> list = new ArrayList<>();
+        for (Object[] row : rows) {
+            OrderEntity oe = (OrderEntity) row[0];
+            String cUsername = (String) row[1];
+            Order o = mapEntity(oe);
+            o.setCustomerUsername(cUsername);
+            list.add(o);
         }
-        return orders;
+        return list;
     }
 
-    public List<Order> findPendingDeliveryOrders(int partnerId) throws SQLException {
-        List<Order> orders = new ArrayList<>();
-        String sql = "SELECT o.*, r.Name AS RestaurantName, u.Username AS CustomerUsername " +
-                     "FROM OrderTable o " +
-                     "LEFT JOIN Restaurant r ON o.RestaurantID = r.RestaurantID " +
-                     "LEFT JOIN Customer u ON o.UserID = u.CustomerID " +
-                     "WHERE (o.Status IN ('ready', 'ready_for_pickup') AND o.DeliveryPartnerID IS NULL) " +
-                     "   OR (o.DeliveryPartnerID = ?) " +
-                     "ORDER BY o.OrderDate DESC";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, partnerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) orders.add(mapOrderRow(rs));
-            }
+    public List<Order> findPendingDeliveryOrders(int partnerId) {
+        Session session = getSession();
+        List<Object[]> rows = session.createQuery(
+                "SELECT o, r.name, c.username FROM OrderEntity o " +
+                "LEFT JOIN RestaurantEntity r ON o.restaurantId = r.restaurantId " +
+                "LEFT JOIN CustomerEntity c ON o.userId = c.customerId " +
+                "WHERE (o.status IN ('ready', 'ready_for_pickup') AND o.deliveryPartnerId IS NULL) " +
+                "   OR (o.deliveryPartnerId = :pId) " +
+                "ORDER BY o.orderDate DESC", Object[].class
+        ).setParameter("pId", partnerId).getResultList();
+
+        List<Order> list = new ArrayList<>();
+        for (Object[] row : rows) {
+            OrderEntity oe = (OrderEntity) row[0];
+            String rName = (String) row[1];
+            String cUsername = (String) row[2];
+            Order o = mapEntity(oe);
+            o.setRestaurantName(rName);
+            o.setCustomerUsername(cUsername);
+            list.add(o);
         }
-        return orders;
+        return list;
     }
 
-    public boolean assignDeliveryPartnerAndStatus(int orderId, int partnerId, String status) throws SQLException {
-        String sql = "UPDATE OrderTable SET DeliveryPartnerID = ?, Status = ? " +
-                     "WHERE OrderID = ? AND (DeliveryPartnerID IS NULL OR DeliveryPartnerID = ?)";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, partnerId);
-            ps.setString(2, status);
-            ps.setInt(3, orderId);
-            ps.setInt(4, partnerId);
-            return ps.executeUpdate() > 0;
+    public boolean assignDeliveryPartnerAndStatus(int orderId, int partnerId, String status) {
+        Session session = getSession();
+        OrderEntity entity = session.get(OrderEntity.class, orderId);
+        if (entity == null) return false;
+
+        if (entity.getDeliveryPartnerId() == null || entity.getDeliveryPartnerId().equals(partnerId)) {
+            entity.setDeliveryPartnerId(partnerId);
+            entity.setStatus(status);
+            session.merge(entity);
+            return true;
         }
+        return false;
     }
 
-    public List<Order> findAll() throws SQLException {
-        List<Order> orders = new ArrayList<>();
-        String sql = "SELECT o.*, r.Name AS RestaurantName, u.Username AS CustomerUsername " +
-                     "FROM OrderTable o " +
-                     "LEFT JOIN Restaurant r ON o.RestaurantID = r.RestaurantID " +
-                     "LEFT JOIN Customer u ON o.UserID = u.CustomerID " +
-                     "ORDER BY o.OrderDate DESC";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) orders.add(mapOrderRow(rs));
+    public List<Order> findAll() {
+        Session session = getSession();
+        List<Object[]> rows = session.createQuery(
+                "SELECT o, r.name, c.username FROM OrderEntity o " +
+                "LEFT JOIN RestaurantEntity r ON o.restaurantId = r.restaurantId " +
+                "LEFT JOIN CustomerEntity c ON o.userId = c.customerId " +
+                "ORDER BY o.orderDate DESC", Object[].class
+        ).getResultList();
+
+        List<Order> list = new ArrayList<>();
+        for (Object[] row : rows) {
+            OrderEntity oe = (OrderEntity) row[0];
+            String rName = (String) row[1];
+            String cUsername = (String) row[2];
+            Order o = mapEntity(oe);
+            o.setRestaurantName(rName);
+            o.setCustomerUsername(cUsername);
+            list.add(o);
         }
-        return orders;
+        return list;
     }
 
-    public boolean updateStatus(int orderId, String status) throws SQLException {
-        String sql = "UPDATE OrderTable SET Status = ? WHERE OrderID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, status);
-            ps.setInt(2, orderId);
-            return ps.executeUpdate() > 0;
-        }
+    public boolean updateStatus(int orderId, String status) {
+        Session session = getSession();
+        OrderEntity entity = session.get(OrderEntity.class, orderId);
+        if (entity == null) return false;
+
+        entity.setStatus(status);
+        session.merge(entity);
+        return true;
     }
 
-    public Order findById(int orderId) throws SQLException {
-        String sql = "SELECT o.*, r.Name AS RestaurantName, u.Username AS CustomerUsername " +
-                     "FROM OrderTable o " +
-                     "LEFT JOIN Restaurant r ON o.RestaurantID = r.RestaurantID " +
-                     "LEFT JOIN Customer u ON o.UserID = u.CustomerID " +
-                     "WHERE o.OrderID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapOrderRow(rs);
-            }
-        }
-        return null;
+    public Order findById(int orderId) {
+        Session session = getSession();
+        List<Object[]> rows = session.createQuery(
+                "SELECT o, r.name, c.username FROM OrderEntity o " +
+                "LEFT JOIN RestaurantEntity r ON o.restaurantId = r.restaurantId " +
+                "LEFT JOIN CustomerEntity c ON o.userId = c.customerId " +
+                "WHERE o.orderId = :oId", Object[].class
+        ).setParameter("oId", orderId).getResultList();
+
+        if (rows.isEmpty()) return null;
+        Object[] row = rows.get(0);
+        OrderEntity oe = (OrderEntity) row[0];
+        String rName = (String) row[1];
+        String cUsername = (String) row[2];
+        Order o = mapEntity(oe);
+        o.setRestaurantName(rName);
+        o.setCustomerUsername(cUsername);
+        return o;
     }
 
-    public List<OrderItem> findItemsByOrderId(int orderId) throws SQLException {
-        List<OrderItem> items = new ArrayList<>();
-        String sql = "SELECT oi.*, m.ItemName FROM OrderItem oi " +
-                     "LEFT JOIN Menu m ON oi.MenuID = m.MenuID " +
-                     "WHERE oi.OrderID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) items.add(mapOrderItemRow(rs));
-            }
+    public List<OrderItem> findItemsByOrderId(int orderId) {
+        Session session = getSession();
+        List<Object[]> rows = session.createQuery(
+                "SELECT oi, m.itemName FROM OrderItemEntity oi " +
+                "LEFT JOIN MenuEntity m ON oi.menuId = m.menuId " +
+                "WHERE oi.orderId = :oId", Object[].class
+        ).setParameter("oId", orderId).getResultList();
+
+        List<OrderItem> list = new ArrayList<>();
+        for (Object[] row : rows) {
+            OrderItemEntity entity = (OrderItemEntity) row[0];
+            String itemName = (String) row[1];
+            OrderItem item = new OrderItem();
+            item.setOrderItemID(entity.getOrderItemId());
+            item.setOrderID(entity.getOrderId());
+            item.setMenuID(entity.getMenuId());
+            item.setQuantity(entity.getQuantity());
+            item.setItemTotal(entity.getItemTotal());
+            item.setItemName(itemName);
+            list.add(item);
         }
-        return items;
+        return list;
     }
 
-    // Admin stats helpers
-    public int countAll() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM OrderTable";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) return rs.getInt(1);
-        }
-        return 0;
+    public int countAll() {
+        Session session = getSession();
+        Long count = session.createQuery("SELECT COUNT(o) FROM OrderEntity o", Long.class).getSingleResult();
+        return count != null ? count.intValue() : 0;
     }
 
-    public double totalRevenue() throws SQLException {
-        String sql = "SELECT COALESCE(SUM(TotalAmount), 0) FROM OrderTable WHERE Status = 'delivered'";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) return rs.getDouble(1);
-        }
-        return 0;
+    public double totalRevenue() {
+        Session session = getSession();
+        BigDecimal total = session.createQuery(
+                "SELECT SUM(o.totalAmount) FROM OrderEntity o WHERE o.status = 'delivered'", BigDecimal.class
+        ).getSingleResult();
+        return total != null ? total.doubleValue() : 0.0;
     }
 
-    public int countPendingByRestaurantId(int restaurantId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM OrderTable WHERE RestaurantID = ? AND Status IN ('pending','preparing')";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, restaurantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
-            }
-        }
-        return 0;
+    public int countPendingByRestaurantId(int restaurantId) {
+        Session session = getSession();
+        Long count = session.createQuery(
+                "SELECT COUNT(o) FROM OrderEntity o WHERE o.restaurantId = :rId AND o.status IN ('pending', 'preparing')", Long.class
+        ).setParameter("rId", restaurantId).getSingleResult();
+        return count != null ? count.intValue() : 0;
     }
 
-    public double revenueByRestaurantId(int restaurantId) throws SQLException {
-        String sql = "SELECT COALESCE(SUM(TotalAmount), 0) FROM OrderTable WHERE RestaurantID = ? AND Status = 'delivered'";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, restaurantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getDouble(1);
-            }
-        }
-        return 0;
+    public double revenueByRestaurantId(int restaurantId) {
+        Session session = getSession();
+        BigDecimal total = session.createQuery(
+                "SELECT SUM(o.totalAmount) FROM OrderEntity o WHERE o.restaurantId = :rId AND o.status = 'delivered'", BigDecimal.class
+        ).setParameter("rId", restaurantId).getSingleResult();
+        return total != null ? total.doubleValue() : 0.0;
     }
 
-    public int countByRestaurantId(int restaurantId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM OrderTable WHERE RestaurantID = ?";
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, restaurantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
-            }
-        }
-        return 0;
+    public int countByRestaurantId(int restaurantId) {
+        Session session = getSession();
+        Long count = session.createQuery(
+                "SELECT COUNT(o) FROM OrderEntity o WHERE o.restaurantId = :rId", Long.class
+        ).setParameter("rId", restaurantId).getSingleResult();
+        return count != null ? count.intValue() : 0;
     }
 }
