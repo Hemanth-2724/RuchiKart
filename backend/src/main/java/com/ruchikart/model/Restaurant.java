@@ -12,6 +12,7 @@ public class Restaurant {
     private boolean isActive;
     private String imagePath;
     private boolean isVeg;
+    private int ownerID;
 
     public Restaurant() {}
 
@@ -27,6 +28,9 @@ public class Restaurant {
         this.imagePath = imagePath;
         this.isVeg = isVeg;
     }
+
+    public int getOwnerID() { return ownerID; }
+    public void setOwnerID(int ownerID) { this.ownerID = ownerID; }
 
     public int getRestaurantID() { return restaurantID; }
     public void setRestaurantID(int restaurantID) { this.restaurantID = restaurantID; }

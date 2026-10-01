@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-RuchiKartApplication<ruchikart>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.ruchikart.RuchiKartApplication",
+            "projectName": "ruchikart",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
